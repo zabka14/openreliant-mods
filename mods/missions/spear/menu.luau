@@ -1,7 +1,10 @@
 -- SPEAR: a campaign of the mod's own, listed on GAME MODES. Each mission is a standard .DTE file
 -- in the mod's folder, built from mission source with `sltool dte build`. A mission's `as` is the
 -- campaign mission it is flown as: the loadout offers what a new pilot gets for that number, and
--- the wing's pilots fly Alpha 2 to 6.
+-- the wing's pilots fly Alpha 2 to 6, as the mode and its records seat them. Each mission flies
+-- as the number after its own, so that the loadout tier the mode's records give the campaign's
+-- missions before it applies to it: a mission's tier only opens ships for the missions numbered
+-- after it.
 
 local core = require("openreliant.core")
 local ui = require("openreliant.ui")
@@ -44,7 +47,7 @@ local definition = {
     missions = {
         {
             number = 301,
-            as = 1,
+            as = 2,
             -- The briefing room's screen plays the mission's hologram, a Bink file of the mod's
             -- (352 by 305, drawn onto the Reliant's screen), then Enriquez says the last word.
             -- Both are placeholders: the hologram a test pattern, the last word the game's own
@@ -64,6 +67,25 @@ local definition = {
                 "Fly to the landing zone",
             },
         },
+        {
+            number = 302,
+            as = 3,
+            -- Placeholders too, as mission 1's: the same test pattern, and the game's own
+            -- mission 2 tag.
+            hologram = "spear_m01.bik",
+            last_word = "ms_speech\\enrbr_tag02.ut",
+            objectives = {
+                "Launch and jump to Forte San Marco",
+                "Destroy the Azans and Kurgens attacking the fort",
+                "Destroy the Kazan's escort",
+                "Disable the Kazan's, then the Murmansk's shield generator and engines",
+                "Protect the evacuation for ten minutes",
+                "Cover the convoy's departure",
+                "Intercept the Sevastopol's torpedoes",
+                "Destroy the Sevastopol's Sabres",
+                "Jump to the Richelieu and land",
+            },
+        },
     },
     campaign = true,
     -- The mod's screen before each mission's briefing room: it plays the opening movie.
@@ -74,15 +96,14 @@ local definition = {
     walk_in = true,
     -- The ITAC debriefs each mission before the next one's briefing.
     debriefing = true,
-    -- The loadout offers the Mirage alone, the Marauders' standard fighter. A mission's own
-    -- `only_ship` can't do it: at the campaign's first tier the loadout doesn't load the Mirage.
-    loadout_ships = { "mirage" },
-    -- The records the mode changes for its missions: the wing's call signs (records.luau).
+    -- The records the mode changes for its missions (records.luau): the wing's call signs, the
+    -- loadout's tier and ships, the pilots of Alpha 5 and 6, and the debriefings.
     records = "records.luau",
-    -- The wing is the 205th Marauders': the mod's pilots (mod.ini) fly Alpha 2 to 6 in every
-    -- mission, Corsair as Alpha 2, with the Marauders' faces on the radio. Grizzly is held back
-    -- for the missions' other ships.
-    wing_pilots = { "spear:corsair", "spear:fahrenheit", "spear:walkn", "spear:pitbull", "spear:stardust" },
+    -- The wing is the 205th Marauders': the mod's pilots (mod.ini), with the Marauders' faces on
+    -- the radio. Corsair, Fahrenheit and Walk'n fly Alpha 2 to 4 in every mission; Alpha 5 and 6
+    -- change from one mission to the next, which the records seat. Grizzly is held back for the
+    -- missions' other ships.
+    wing_pilots = { "spear:corsair", "spear:fahrenheit", "spear:walkn", "none", "none" },
 }
 if not pcall(core.register_game_mode, definition) then
     definition.walk_in = nil

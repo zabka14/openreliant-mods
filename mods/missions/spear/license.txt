@@ -1,7 +1,8 @@
 SPEAR
 
 A campaign of its own for OpenReliant, on the main menu's GAME MODES: the 205th
-Marauders on the day the war comes back. Version 0.1 holds its first mission.
+Marauders on the day the war comes back. Version 0.2 holds its first two
+missions.
 
 This mod mixes two kinds of material, under two licences.
 
@@ -9,22 +10,23 @@ The mod's own work is licensed under the Mozilla Public License 2.0
 (https://mozilla.org/MPL/2.0/):
 
   - the manifest mod.ini
-  - the scripts menu.luau, records.luau, landing.luau, cinematic.luau and
-    wing.luau
-  - the mission's source mission301.mission.luau, and mission301.dte, built
-    from it with sltool
+  - the scripts menu.luau, records.luau, landing.luau, cinematic.luau,
+    wing.luau, wing2.luau, nanny.luau and campaign.luau
+  - the missions' sources mission301.mission.luau and mission302.mission.luau,
+    and mission301.dte and mission302.dte, built from them with sltool
   - the movies spear_intro.bik and spear_m01.bik, placeholders made for the
     mod: a title card and a test pattern
 
-The radio lines, the *_m1_l*.opus files, were made with Chatterbox (Resemble AI,
-MIT licence), cloning voices from StarLancer's own speech: the wingmen's voices
-of Face, Juice, Ego, Rhino and Flash, the Reliant's landing control, and the
-pilots of a Prowler, a convoy and a Nanny in the campaign's missions. StarLancer
-is copyright Digital Anvil, Warthog and Microsoft. The lines' words are the
-mod's own.
+The radio lines, the *_m1_l*.opus and *_m2_l*.opus files, were made with
+Chatterbox (Resemble AI, MIT licence), cloning voices from StarLancer's own
+speech: the wingmen's voices of Face, Juice, Ego, Rhino, Flash and Cutter, the
+Reliant's landing control, Fort Baxter's comms officer, and the pilots of a
+Prowler, a convoy and a Nanny in the campaign's missions. StarLancer is
+copyright Digital Anvil, Warthog and Microsoft. The lines' words are the mod's
+own.
 
-The faces on the radio, the ships, the music and the rest of what the mission
-shows are the game's own, from your copy of StarLancer; Mars is Realistic
-Planets', which the mod requires. None of them is in this mod.
+The faces on the radio, the ships, the music and the rest of what the missions
+show are the game's own, from your copy of StarLancer; Mars and Earth are
+Realistic Planets', which the mod requires. None of them is in this mod.
 
 This is a fan mod for OpenReliant, which needs a copy of StarLancer to play.

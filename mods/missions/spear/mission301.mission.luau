@@ -77,6 +77,9 @@ torpedoes_called = global("(GV)torpedoes called", 0)
 bombers_out = global("(GV)bombers out", 0)
 torpedoes_flying = global("(GV)torpedoes flying", 0)
 attack_done = global("(GV)attack done", 0)
+-- How many of the Kamovs' torpedoes struck the Richelieu, as campaign.luau counts them: the
+-- campaign's first Richelieu hits, which the script keeps as the mission is won.
+richelieu_hits = global("(GV)richelieu hits", 0)
 
 -- Flight groups. The player's own is listed in the player's wing.
 
@@ -2198,11 +2201,15 @@ bomber_out = part("(F)Bomber out", function()
     return 1
 end)
 
--- The attack is over once both Kamovs are destroyed or gone and no torpedo is still flying.
+-- The attack is over once both Kamovs are destroyed or gone and no torpedo is still flying. The
+-- torpedoes that struck the Richelieu are counted then: campaign.luau gives them as the result of
+-- PrintShipName with 1, which the mission uses for nothing else.
 
 attack_over = part("(F)Attack over", function()
     if bombers_out == 2 and torpedoes_flying == 0 and attack_done == 0 then
         attack_done = 1
+        PrintShipName(richelieu, 1)
+        richelieu_hits = result()
         Wait(3)
         spawn(home_cleared)
     end
