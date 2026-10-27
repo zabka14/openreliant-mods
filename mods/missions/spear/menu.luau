@@ -58,7 +58,7 @@ local definition = {
                 "Escort Prowler Three to the Richelieu",
                 "Jump to Nav 4 and assist the Alliance group",
                 "Jump to Nav 6 and protect the convoy",
-                "Return to the Richelieu",
+                "Return to the Richelieu and rearm at the Nanny",
                 "Defend the Richelieu",
                 "Ask permission to land",
                 "Fly to the landing zone",

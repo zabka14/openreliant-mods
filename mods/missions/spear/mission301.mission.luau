@@ -2,9 +2,11 @@
 -- the player flies two minutes in formation on Corsair while he makes a few slow turns. The
 -- bridge then breaks off the exercise: the wing jumps to Nav 2 to save a Prowler shuttle from
 -- Coalition fighters, brings it home, jumps to Nav 4 to find an Alliance group destroyed and its
--- attackers still there, jumps to Nav 6 to cover a convoy's escape, and comes home as Coalition
--- fighters jump in to attack the Richelieu. Once they are down, the player lands on the
--- Richelieu, which ends the mission.
+-- attackers still there, jumps to Nav 6 to cover a convoy's escape, and comes home, where the
+-- bridge warns of an attack on its way and the Nanny stands by to rearm the player. Coalition
+-- fighters then jump in to attack the Richelieu, and once they are down, two Kamov bombers jump in
+-- far off to torpedo it. Once they are destroyed or gone, the player lands on the Richelieu,
+-- which ends the mission.
 --
 -- The Richelieu is the mod's own carrier: ship type 300 of the manifest, a copy of the Victorious
 -- under its own name, so the display calls it RICHELIEU and the game's Victorious stays as it is.
@@ -63,6 +65,18 @@ nav2_kills = global("(GV)nav 2 kills", 0)
 nav4_kills = global("(GV)nav 4 kills", 0)
 nav6_kills = global("(GV)nav 6 kills", 0)
 home_kills = global("(GV)home kills", 0)
+-- The Nanny's rearming before the attack at home: 0 until the bridge offers it, 1 while the Nanny
+-- waits for the player, 2 while the player's ship is aboard, and 3 once the attack is on its way.
+nanny_state = global("(GV)nanny state", 0)
+-- The bombers' wave after the fighters at home: whether each Kamov is still in the fight (1 from
+-- its jump in, 0 once destroyed or gone), whether the bridge has called the torpedoes, how many
+-- Kamovs are out of it, how many torpedoes are flying, and whether the attack is over.
+kamov_a_on = global("(GV)kamov A on", 0)
+kamov_b_on = global("(GV)kamov B on", 0)
+torpedoes_called = global("(GV)torpedoes called", 0)
+bombers_out = global("(GV)bombers out", 0)
+torpedoes_flying = global("(GV)torpedoes flying", 0)
+attack_done = global("(GV)attack done", 0)
 
 -- Flight groups. The player's own is listed in the player's wing.
 
@@ -86,6 +100,8 @@ home_convoy = flight_group("(FG)Home convoy")
 nav6_convoy = flight_group("(FG)Nav 6 convoy")
 nav6_raiders = flight_group("(FG)Nav 6 raiders")
 home_attackers = flight_group("(FG)Home attackers")
+home_bombers = flight_group("(FG)Home bombers")
+home_torpedoes = flight_group("(FG)Home torpedoes")
 
 -- Ships. The first ship is the player's. The wing is six Mirages, the Marauders' fighter, and the
 -- Richelieu has four launch points (`sltool shp info Victorious.SHP`): gates 0 and 1 in the stern
@@ -220,6 +236,14 @@ recovery_point = nav_point("Recovery point", {
 wingman_hold = waypoint("Wingman hold", {
     group = home_points,
     position = { -24000, 0, -90000 },
+})
+-- Where the player flies to rearm at the Nanny: 21,000 ahead of it, where its Dock order begins
+-- the way in, as mission 10's dock point stands ahead of its Nanny. It rides the carrier with the
+-- other home points, as the Nanny sails with it; its ShipReached trigger, within 4000, takes the
+-- player aboard.
+nanny_approach = nav_point("Nanny approach", {
+    group = home_points,
+    position = { 105000, -6000, 1000 },
 })
 -- Where `--part "test convoy"` looks at the carrier and the ships about it from: off its right
 -- side, astern and above it.
@@ -1118,6 +1142,74 @@ attacker_8 = ship("Attacker 8", {
     yaw = 200,
 })
 
+-- The second wave at home: two Kamov bombers that jump in together ahead of the carrier and off
+-- its left, about 600,000 from it, then split, each for a firing point of its own 350,000 from the
+-- carrier, the two points 360,000 apart, about 350,000 from where they came in. Each launches its
+-- two torpedoes at the carrier as it reaches its point, then flies off for its way out and jumps
+-- out. The torpedoes are ships of their own, which ride in the Kamov's launch gates until they are
+-- launched, as mission 1's do. These points ride the carrier with the other home points.
+
+kamov_a_in = point("Kamov A in", {
+    group = home_points,
+    position = { -154000, -30000, 580000 },
+    yaw = 180,
+})
+kamov_b_in = point("Kamov B in", {
+    group = home_points,
+    position = { -146000, -30000, 586000 },
+    yaw = 180,
+})
+kamov_a_fire = waypoint("Kamov A fire", {
+    group = home_points,
+    position = { -250000, -30000, 245000 },
+})
+kamov_b_fire = waypoint("Kamov B fire", {
+    group = home_points,
+    position = { 100000, -30000, 335000 },
+})
+kamov_a_out = waypoint("Kamov A out", {
+    group = home_points,
+    position = { -600000, -30000, 300000 },
+})
+kamov_b_out = waypoint("Kamov B out", {
+    group = home_points,
+    position = { 450000, -30000, 400000 },
+})
+kamov_a = ship("Kamov A", {
+    type = "kamov",
+    group = home_bombers,
+    pilot = "coalition_torpedo_leader",
+    position = { -154000, -30000, 580000 },
+    yaw = 180,
+})
+kamov_b = ship("Kamov B", {
+    type = "kamov",
+    group = home_bombers,
+    pilot = "russian_bomber",
+    position = { -146000, -30000, 586000 },
+    yaw = 180,
+})
+torpedo_a1 = ship("Torpedo A1", {
+    type = "russian_torpedo",
+    group = home_torpedoes,
+    position = { -154000, -30000, 580000 },
+})
+torpedo_a2 = ship("Torpedo A2", {
+    type = "russian_torpedo",
+    group = home_torpedoes,
+    position = { -154000, -30000, 580000 },
+})
+torpedo_b1 = ship("Torpedo B1", {
+    type = "russian_torpedo",
+    group = home_torpedoes,
+    position = { -146000, -30000, 586000 },
+})
+torpedo_b2 = ship("Torpedo B2", {
+    type = "russian_torpedo",
+    group = home_torpedoes,
+    position = { -146000, -30000, 586000 },
+})
+
 -- Where the camera stands for the shots of each zone: at Nav 4 beside the wreckage for the second
 -- wave (the arrival's shot flies through it on a curve); at Nav 6 off the convoy's left, above it;
 -- at home beside where Prowler Three and the Coalition fighters come out of their jumps (these two
@@ -1828,9 +1920,13 @@ nav6_cleared = part("(F)Nav 6 cleared", function()
     return 1
 end)
 
--- Home to the attack: the bridge welcomes the wing back, then Coalition fighters jump in ahead
--- of the carrier and go for everything there: the carrier and the ships about it, the convoy and
--- the wing. None of the ships takes damage in this draft; the carrier's guns fire on them.
+-- Home to the attack: the bridge welcomes the wing back and warns of an attack on its way, with
+-- time to rearm at the Nanny first. The objective to return stays current, and the display points
+-- the player to the Nanny's approach, ahead of it. Reaching it takes the player's ship aboard: its
+-- Dock order cuts to the Nanny's view as the ship flies in at the bow, rearms it to the sound of
+-- the work, and flies it out astern, back to the cockpit (mod script nanny.luau repairs it too).
+-- The attack comes 15 seconds after the ship is out, or two minutes after the offer if the player
+-- hasn't gone aboard by then.
 
 arrive_home_attack = part("(F)Arrive home to the attack", function()
     WaitForJumpOrLaunch(alpha)
@@ -1843,6 +1939,48 @@ arrive_home_attack = part("(F)Arrive home to the attack", function()
     Wait(1)
     WaitForSpeech()
     Wait(1)
+    CommsFromPilot("victorious_bridge_officer", "talking", "ctl_m1_l24")
+    Wait(1)
+    WaitForSpeech()
+    Wait(1)
+    SetNavPoint(alpha, nanny_approach)
+    SetEscortPoint(player, nanny_approach)
+    SetFlybackMarker(nanny_approach, 4000)
+    nanny_state = 1
+    spawn(nanny_time_up)
+    return 1
+end)
+
+-- Two minutes after the offer, the attack comes, unless the player has gone aboard the Nanny.
+
+nanny_time_up = part("(F)Nanny time up", function()
+    Wait(120)
+    if nanny_state == 1 then
+        nanny_state = 3
+        SetEscortPoint(player, nil)
+        ResetFlybackMarker()
+        spawn(home_attack)
+    end
+    return 1
+end)
+
+-- The player's ship reaches the Nanny's approach while the Nanny waits: it goes aboard by port 0.
+
+on(nanny_approach, "ship_reached", { repeats = "always", reached_ship = player }, function(reached_ship)
+    if nanny_state == 1 then
+        nanny_state = 2
+        SetEscortPoint(player, nil)
+        ResetFlybackMarker()
+        Dock(player, nanny, 0)
+    end
+    return 1
+end)
+
+-- The attack: Coalition fighters jump in ahead of the carrier and go for everything there: the
+-- carrier and the ships about it, the convoy and the wing. None of the ships takes damage in this
+-- draft; the carrier's guns fire on them.
+
+home_attack = part("(F)Home attack", function()
     CreateFlightGroup(home_attackers)
     SetInvulnerability(carrier_group, 1)
     SetAI(home_attackers, "fly", 1, nil)
@@ -1891,7 +2029,7 @@ on(home_attackers, "destroyed", { repeats = "always" }, function(killer, victim)
         spawn(home_batteries)
     end
     if home_kills == 8 then
-        spawn(home_cleared)
+        spawn(bombers_wave)
     end
     return 1
 end)
@@ -1902,6 +2040,172 @@ home_batteries = part("(F)Home batteries", function()
     Wait(1)
     WaitForSpeech()
     Wait(1)
+    return 1
+end)
+
+-- The fighters down, two Kamovs jump in far ahead of the carrier, split up, and each makes for its
+-- firing point, while the wing goes after them. The torpedoes are made with them, each in a launch
+-- gate of its Kamov and aimed at the carrier, its Explode below, so that it blows up as it hits.
+
+bombers_wave = part("(F)Bombers wave", function()
+    Wait(3)
+    CreateFlightGroup(home_bombers)
+    CreateFlightGroup(home_torpedoes)
+    SetAI(home_torpedoes, "explode", 1, nil)
+    SetAI(home_torpedoes, "find_new_target", 1, richelieu)
+    SetupLaunch(torpedo_a1, kamov_a, 0)
+    SetupLaunch(torpedo_a2, kamov_a, 1)
+    SetupLaunch(torpedo_b1, kamov_b, 0)
+    SetupLaunch(torpedo_b2, kamov_b, 1)
+    SetAI(home_bombers, "fly", 1, nil)
+    SetAI(kamov_a, "jump_in", 1, kamov_a_in)
+    SetAI(kamov_b, "jump_in", 1, kamov_b_in)
+    WaitForSpeech()
+    CommsFromPilot("victorious_bridge_officer", "talking", "ctl_m1_l25")
+    WaitForJumpOrLaunch(home_bombers)
+    kamov_a_on = 1
+    kamov_b_on = 1
+    Fly(kamov_a, kamov_a_fire, 0)
+    Fly(kamov_b, kamov_b_fire, 0)
+    Wait(1)
+    WaitForSpeech()
+    Wait(1)
+    CommsFromShip(a2, "talking", "cor_m1_l43")
+    ClearAI(escorts)
+    SetAI(escorts, "find_new_target", 1, home_bombers)
+    SetPlayerTarget(player, kamov_a)
+    Wait(1)
+    WaitForSpeech()
+    Wait(1)
+    return 1
+end)
+
+-- Each Kamov fires as it reaches its point, 350,000 from the carrier: its bay opens, its two
+-- torpedoes go three seconds apart, it closes the bay and turns for its way out, and jumps out 20
+-- seconds later if it is still flying.
+
+on(kamov_a_fire, "ship_reached", { reached_ship = kamov_a }, function(reached_ship)
+    if kamov_a_on == 1 then
+        spawn(kamov_a_attack)
+    end
+    return 1
+end)
+
+on(kamov_b_fire, "ship_reached", { reached_ship = kamov_b }, function(reached_ship)
+    if kamov_b_on == 1 then
+        spawn(kamov_b_attack)
+    end
+    return 1
+end)
+
+kamov_a_attack = part("(F)Kamov A attack", function()
+    StartShipAnimation(kamov_a, "deploy")
+    spawn(torpedoes_away)
+    Wait(2)
+    if kamov_a_on == 1 then
+        StartLaunch(torpedo_a1)
+    end
+    Wait(3)
+    if kamov_a_on == 1 then
+        StartLaunch(torpedo_a2)
+    end
+    Wait(2)
+    if kamov_a_on == 1 then
+        StartShipAnimationReverse(kamov_a, "deploy")
+        Fly(kamov_a, kamov_a_out, 0)
+    end
+    Wait(20)
+    if kamov_a_on == 1 then
+        kamov_a_on = 0
+        SetAI(kamov_a, "jump_out", 1, nil)
+        bomber_out()
+    end
+    return 1
+end)
+
+kamov_b_attack = part("(F)Kamov B attack", function()
+    StartShipAnimation(kamov_b, "deploy")
+    spawn(torpedoes_away)
+    Wait(2)
+    if kamov_b_on == 1 then
+        StartLaunch(torpedo_b1)
+    end
+    Wait(3)
+    if kamov_b_on == 1 then
+        StartLaunch(torpedo_b2)
+    end
+    Wait(2)
+    if kamov_b_on == 1 then
+        StartShipAnimationReverse(kamov_b, "deploy")
+        Fly(kamov_b, kamov_b_out, 0)
+    end
+    Wait(20)
+    if kamov_b_on == 1 then
+        kamov_b_on = 0
+        SetAI(kamov_b, "jump_out", 1, nil)
+        bomber_out()
+    end
+    return 1
+end)
+
+-- The bridge calls the first torpedoes away, once.
+
+torpedoes_away = part("(F)Torpedoes away", function()
+    if torpedoes_called == 0 then
+        torpedoes_called = 1
+        WaitForSpeech()
+        CommsFromPilot("victorious_bridge_officer", "talking", "ctl_m1_l26")
+        Wait(1)
+        WaitForSpeech()
+    end
+    return 1
+end)
+
+on(kamov_a, "destroyed", function(killer, victim)
+    if kamov_a_on == 1 then
+        kamov_a_on = 0
+        bomber_out()
+    end
+    return 1
+end)
+
+on(kamov_b, "destroyed", function(killer, victim)
+    if kamov_b_on == 1 then
+        kamov_b_on = 0
+        bomber_out()
+    end
+    return 1
+end)
+
+-- The torpedoes in flight: each counts from its launch until it hits or is shot down.
+
+on(home_torpedoes, "launched", { repeats = "always" }, function(launched_ship)
+    torpedoes_flying += 1
+    return 1
+end)
+
+on(home_torpedoes, "destroyed", { repeats = "always" }, function(killer, victim)
+    if torpedoes_flying > 0 then
+        torpedoes_flying -= 1
+    end
+    attack_over()
+    return 1
+end)
+
+bomber_out = part("(F)Bomber out", function()
+    bombers_out += 1
+    attack_over()
+    return 1
+end)
+
+-- The attack is over once both Kamovs are destroyed or gone and no torpedo is still flying.
+
+attack_over = part("(F)Attack over", function()
+    if bombers_out == 2 and torpedoes_flying == 0 and attack_done == 0 then
+        attack_done = 1
+        Wait(3)
+        spawn(home_cleared)
+    end
     return 1
 end)
 
@@ -2016,6 +2320,18 @@ on(player, "jumped_in", { repeats = "always" }, function(jumped_in_ship)
     end
     if phase == 5 then
         spawn(arrive_home_attack)
+    end
+    return 1
+end)
+
+-- The Nanny's Docked comes as the player's ship leaves it, rearmed: the attack at home follows 15
+-- seconds later.
+
+on(player, "docked", { repeats = "always" }, function()
+    if nanny_state == 2 then
+        nanny_state = 3
+        Wait(15)
+        spawn(home_attack)
     end
     return 1
 end)
@@ -2442,7 +2758,8 @@ test_convoy = part("(F)Test convoy", function()
 end)
 
 -- `--part "test nav2"`, `"test prowler home"`, `"test nav4"`, `"test nav6"` and `"test attack"`
--- jump the wing straight to that leg once it has launched.
+-- jump the wing straight to that leg once it has launched (`"test attack"` to the Nanny's offer,
+-- which the attack follows two minutes later).
 
 test_nav2 = part("(F)Test nav2", function()
     Wait(40)
@@ -2479,8 +2796,33 @@ test_attack = part("(F)Test attack", function()
     return 1
 end)
 
+-- `--part "test nanny"` does the same, and puts the player's ship at the Nanny's approach 45
+-- seconds after the jump, once the bridge has offered it, so that it goes aboard at once.
+
+test_nanny = part("(F)Test nanny", function()
+    Wait(40)
+    phase = 5
+    spawn(jump_home)
+    Wait(45)
+    SnapToPoint(player, nanny_approach)
+    return 1
+end)
+
 -- `--part "test jump"` jumps the wing to Nav 1 once it has launched, as the player's jump would,
 -- and targets Corsair, to see the wing come out of the jump.
+
+-- `--part "test bombers"` jumps the wing home once it has launched, with neither the Nanny nor
+-- the fighters' attack, and sends the Kamovs in 15 seconds after the jump.
+
+test_bombers = part("(F)Test bombers", function()
+    Wait(40)
+    phase = 6
+    spawn(jump_home)
+    Wait(15)
+    SetInvulnerability(carrier_group, 1)
+    spawn(bombers_wave)
+    return 1
+end)
 
 test_jump = part("(F)Test jump", function()
     Wait(40)
