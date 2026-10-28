@@ -1,16 +1,14 @@
 -- records.luau: the records SPEAR changes for its own missions alone; the game mode runs it before
 -- each of them, and the changes go back as the mission ends. Each SPEAR mission flies as the
--- campaign's mission after its own number (menu.luau): mission 1 as 2, mission 2 as 3, mission 3
--- as 4. So what the game reads by that number is set there: the loadout's ships, the pilots of
--- Alpha 5 and 6, the launch's date and the debriefing.
+-- campaign's mission of its own number (menu.luau), so what the game reads by that number is set
+-- there: the loadout's ships, the pilots of Alpha 5 and 6, the launch's date and the debriefing.
 
 local core = require("openreliant.core")
 local records = require("openreliant.records")
 local storage = require("openreliant.storage")
 
--- The SPEAR mission next, from 1, and the campaign's mission it flies as.
+-- The SPEAR mission next, from 1, which is also the campaign's mission it flies as.
 local place = core.game_mode_mission and core.game_mode_mission.place or 1
-local flown_as = place + 1
 
 -- What the campaign carries from one mission to the next (campaign.luau): the Richelieu hits and
 -- mission 2's evacuation result. A run from the first mission starts afresh.
@@ -25,38 +23,40 @@ if place == 1 then
     end
 end
 
--- The loadout opens the ships of the highest tier the campaign's missions before the number a
--- mission flies as give, and those the player's rank opens. Campaign mission 1, the empty slot
--- before SPEAR's first, gives tier 1: the Predator, Naginata, Grendel, Crusader, Coyote, Mirage and
--- Tempest, with the tier's missiles. Mission 1 offers the Mirage alone, the Marauders' standard
--- fighter, which the tier loads. Mission 3 offers what mission 2's evacuation result earned: tier
--- 2 for a Grand success, tier 1 for a Success, the Mirage alone for a Failure.
+-- The loadout opens the ships of the highest tier the missions before it give, and those the
+-- player's rank opens, unless the mission lists its own (`loadout_ships`, OpenReliant 0.21), which
+-- can hold ships its tier doesn't open yet. Mission 1 offers the Mirage alone, the Marauders'
+-- standard fighter, with the first tier's missiles, and without the game's mission 1 lesson; it
+-- gives tier 1: the Predator, Naginata, Grendel, Crusader, Coyote, Mirage and Tempest, which
+-- mission 2 offers. Mission 3 offers what mission 2's evacuation result earned: tier 2 for a Grand
+-- success, tier 1 for a Success, the Mirage alone for a Failure.
 records.missions[1].tier = 1
+records.missions[1].lesson = false
 if place == 1 then
-    records.missions[flown_as].only_ship = "mirage"
+    records.missions[1].loadout_ships = { "mirage" }
 elseif place == 3 then
     local result = campaign.evacuation_result
     if result == "grand_success" then
-        records.missions[1].tier = 2
+        records.missions[2].tier = 2
     elseif result == "failure" then
-        records.missions[flown_as].only_ship = "mirage"
+        records.missions[3].loadout_ships = { "mirage" }
     end
 end
 
 -- Alpha 5 and 6, whom the mode's wing leaves to each mission: Pitbull and Stardust in mission 1,
 -- Rook and Mako, new to the squadron, in mission 2.
 if place == 1 then
-    records.missions[flown_as].alpha_5_pilot = "spear:pitbull"
-    records.missions[flown_as].alpha_6_pilot = "spear:stardust"
+    records.missions[1].alpha_5_pilot = "spear:pitbull"
+    records.missions[1].alpha_6_pilot = "spear:stardust"
 elseif place == 2 then
-    records.missions[flown_as].alpha_5_pilot = "spear:rook"
-    records.missions[flown_as].alpha_6_pilot = "spear:mako"
+    records.missions[2].alpha_5_pilot = "spear:rook"
+    records.missions[2].alpha_6_pilot = "spear:mako"
 end
 
 -- The launch shows the date of the campaign's mission 1, the day the war comes back, as SPEAR's
 -- first two missions are flown on it.
-if place <= 2 then
-    records.missions[flown_as].date = records.missions[1].date
+if place == 2 then
+    records.missions[2].date = records.missions[1].date
 end
 
 -- The call signs the comms menu gives the places of the wing, after each pilot's name: the game
@@ -66,11 +66,10 @@ end
 records.text[339] = "Alpha Leader"
 records.text[343] = "Alpha 6"
 
--- The ITAC's debriefings, which the missions flown as 2 and 3 have: the Marauders' squadron
--- commander's, not Enriquez's, so the header names the commander in her place. Every way mission
--- 1 ends rates it a success.
+-- The ITAC's debriefings of missions 1 and 2: the Marauders' squadron commander's, not Enriquez's,
+-- so the header names the commander in her place. Every way mission 1 ends rates it a success.
 records.itac_text[10] = "SQUADRON COMMANDER"
-records.missions[2].debriefing = {
+records.missions[1].debriefing = {
     success = {
         "The Captain is pleased with the Marauders' performance today. What began as a routine patrol and formation exercise quickly turned into a series of desperate engagements. Your flight responded well to the changing situation and helped protect Alliance personnel and assets under attack.",
         "Prowler Three made it safely back to the Richelieu, and your actions at Nav Point Six allowed the surviving convoy vessels to withdraw. You also helped repel the attack on the Richelieu herself. The carrier sustained damage, but she remains operational. Considering how quickly the situation deteriorated, this is a good result.",
@@ -88,7 +87,7 @@ records.missions[2].debriefing = {
 -- out with the convoy: a Grand success (all 12 priority transports saved) is a success with its
 -- bonus with the defenders and a success without them, a Success (6 to 11) a partial success with
 -- them and a partial failure without, and a Failure (fewer) a failure, whatever the defenders.
-records.missions[3].debriefing = {
+records.missions[2].debriefing = {
     success_bonus = {
         "Marauders, the operation at Forte San Marco is complete.",
         "All twelve priority transports survived the evacuation window. The evacuation was a complete success, and the original defenders of the installation survived the attack.",

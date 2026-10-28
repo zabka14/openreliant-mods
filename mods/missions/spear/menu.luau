@@ -1,10 +1,8 @@
 -- SPEAR: a campaign of the mod's own, listed on GAME MODES. Each mission is a standard .DTE file
 -- in the mod's folder, built from mission source with `sltool dte build`. A mission's `as` is the
--- campaign mission it is flown as: the loadout offers what a new pilot gets for that number, and
--- the wing's pilots fly Alpha 2 to 6, as the mode and its records seat them. Each mission flies
--- as the number after its own, so that the loadout tier the mode's records give the campaign's
--- missions before it applies to it: a mission's tier only opens ships for the missions numbered
--- after it.
+-- campaign mission it is flown as, its own number in the mode: the ITAC lists the mode's
+-- debriefings by it, the loadout offers what the records give for it, and the wing's pilots fly
+-- Alpha 2 to 6, as the mode and its records seat them.
 
 local core = require("openreliant.core")
 local ui = require("openreliant.ui")
@@ -47,7 +45,7 @@ local definition = {
     missions = {
         {
             number = 301,
-            as = 2,
+            as = 1,
             -- The briefing room's screen plays the mission's hologram, a Bink file of the mod's
             -- (352 by 305, drawn onto the Reliant's screen), then Enriquez says the last word.
             -- Both are placeholders: the hologram a test pattern, the last word the game's own
@@ -69,7 +67,7 @@ local definition = {
         },
         {
             number = 302,
-            as = 3,
+            as = 2,
             -- Placeholders too, as mission 1's: the same test pattern, and the game's own
             -- mission 2 tag.
             hologram = "spear_m01.bik",

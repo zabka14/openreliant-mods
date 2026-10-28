@@ -47,8 +47,10 @@ window_open = global("(GV)window open", 0)
 systems_step = global("(GV)systems step", 0)
 kazan_engines = global("(GV)kazan engines", 0)
 murmansk_engines = global("(GV)murmansk engines", 0)
--- The Richelieu's strike: whether its torpedoes are away, and how many carriers have exploded.
-strike_on = global("(GV)strike on", 0)
+-- The Richelieu's strike: how many of each carrier's torpedoes are done with (having hit, or shot
+-- down), whether each carrier has exploded, and how many have.
+kazan_torpedoes_done = global("(GV)kazan torpedoes done", 0)
+murmansk_torpedoes_done = global("(GV)murmansk torpedoes done", 0)
 kazan_exploded = global("(GV)kazan exploded", 0)
 murmansk_exploded = global("(GV)murmansk exploded", 0)
 carriers_down = global("(GV)carriers down", 0)
@@ -60,10 +62,12 @@ wave_clock = global("(GV)wave clock", 0)
 waves = global("(GV)waves", 0)
 evac_frozen = global("(GV)evacuation frozen", 0)
 -- The priority transports' turns at the fort's bay: whose turn it is (1 to 12), the seconds into
--- the turn, and which transport is at the bay, which the Sabre waves go for (0 for none).
+-- the turn, which transport is at the bay, which the Sabre waves go for (0 for none), and whether
+-- it has reached the bay's mouth and holds there.
 evac_turn = global("(GV)evacuation turn", 1)
 turn_clock = global("(GV)turn clock", 0)
 at_bay = global("(GV)at bay", 0)
+bay_held = global("(GV)bay held", 0)
 -- The Rippers' shuttle between the fort and the transports: its seconds.
 ripper_clock = global("(GV)ripper clock", 0)
 -- The priority transports lost before the window ended, and saved as it ended.
@@ -140,8 +144,10 @@ first_kurgens = flight_group("(FG)First Kurgens")
 murmansk_group = flight_group("(FG)Murmansk")
 kazan_group = flight_group("(FG)Kazan")
 kazan_escort = flight_group("(FG)Kazan escort")
-strike_torpedoes = flight_group("(FG)Strike torpedoes")
+kazan_torpedoes = flight_group("(FG)Kazan torpedoes")
+murmansk_torpedoes = flight_group("(FG)Murmansk torpedoes")
 convoy_places = flight_group("(FG)Convoy places")
+fort_ring = flight_group("(FG)Fort ring")
 convoy_mammoths = flight_group("(FG)Convoy Mammoths")
 convoy_lueneburgs = flight_group("(FG)Convoy Lueneburgs")
 convoy_lonestars = flight_group("(FG)Convoy Lonestars")
@@ -263,13 +269,15 @@ san_marco_nav = nav_point("Forte San Marco", {
     position = { 0, -20000, 2850000 },
     yaw = 0,
 })
--- Where the Richelieu jumps in, midway between the two carriers, 140,000 beyond the fort and
--- facing it, so that each carrier lies abeam of it at the same range: a ship that lists components
--- flies in from 100,000 behind its arrival, and its bow stops 50,000 short of the fort. Its new
--- place after its jump away, and where the wing jumps to join it, 140,000 astern of it, facing it.
+-- Where the Richelieu jumps in, between the two carriers and beyond the fort, beside it rather
+-- than in its axis: 60,000 to the Murmansk's side, facing the way the wing came in, so that each
+-- carrier lies abeam of it and the fort ahead and off its bow, its bow 100,000 beyond the fort's
+-- far side. A ship that lists components flies in from 100,000 behind its arrival. It stops there
+-- and holds, rather than flying on as it did off its launch. Its new place after its jump away,
+-- and where the wing jumps to join it, 140,000 astern of it, facing it.
 richelieu_in = point("Richelieu in", {
     group = jump_points,
-    position = { 0, 0, 3140000 },
+    position = { -60000, 0, 3190000 },
     yaw = 180,
 })
 richelieu_away = point("Richelieu away", {
@@ -401,43 +409,45 @@ kazan_engine_parts = squad("(AI)Kazan engines", { component(kazan, 1), component
 murmansk_shield = squad("(AI)Murmansk shield", { component(murmansk, 3) })
 murmansk_engine_parts = squad("(AI)Murmansk engines", { component(murmansk, 1), component(murmansk, 2) })
 
--- The Richelieu's torpedoes, one for each carrier, which ride its bow gates until launched, as the
--- Yamato's do in mission 18: gate 2 opens on the Murmansk's side, gate 3 on the Kazan's. The
--- carriers explode together as the first torpedo hits.
+-- The Richelieu's torpedoes, four for each carrier, out of the tubes along either side of its hull
+-- rather than its bays: the Victorious' model has no launch point but its four bays, so each
+-- torpedo is made by the hull's side, 27,000 out from the Richelieu's middle where it holds,
+-- facing its carrier. The Kazan's go from the starboard side, the Murmansk's from the port side.
+-- Each carrier explodes once its own four are done with.
 
-torpedo_kazan = ship("Torpedo Kazan", {
-    type = "torpedo",
-    group = strike_torpedoes,
-    position = { 0, 0, 3140000 },
-})
-torpedo_murmansk = ship("Torpedo Murmansk", {
-    type = "torpedo",
-    group = strike_torpedoes,
-    position = { 0, 0, 3140000 },
-})
+torpedo_kazan_1 = ship("Torpedo Kazan 1", { type = "torpedo", group = kazan_torpedoes, position = { -33000, 0, 3170000 }, yaw = 90 })
+torpedo_kazan_2 = ship("Torpedo Kazan 2", { type = "torpedo", group = kazan_torpedoes, position = { -33000, 0, 3180000 }, yaw = 90 })
+torpedo_kazan_3 = ship("Torpedo Kazan 3", { type = "torpedo", group = kazan_torpedoes, position = { -33000, 0, 3190000 }, yaw = 90 })
+torpedo_kazan_4 = ship("Torpedo Kazan 4", { type = "torpedo", group = kazan_torpedoes, position = { -33000, 0, 3200000 }, yaw = 90 })
+torpedo_murmansk_1 = ship("Torpedo Murmansk 1", { type = "torpedo", group = murmansk_torpedoes, position = { -87000, 0, 3170000 }, yaw = 270 })
+torpedo_murmansk_2 = ship("Torpedo Murmansk 2", { type = "torpedo", group = murmansk_torpedoes, position = { -87000, 0, 3180000 }, yaw = 270 })
+torpedo_murmansk_3 = ship("Torpedo Murmansk 3", { type = "torpedo", group = murmansk_torpedoes, position = { -87000, 0, 3190000 }, yaw = 270 })
+torpedo_murmansk_4 = ship("Torpedo Murmansk 4", { type = "torpedo", group = murmansk_torpedoes, position = { -87000, 0, 3200000 }, yaw = 270 })
 
 -- The convoy that jumps in with the Richelieu: the 22 evacuation ships and their escorts, each
--- jumping in at a place of its own, on the side of the fort the wing came in from. The priority
--- transports take their turns at the fort's bay from there: the Mammoths to the left, the slower
--- Lueneburgs closer, to the right. The Rippers shuttle between their places, below, and the bay.
--- The fort's bay mouth stands 33,000 astern of its stern end.
+-- jumping in at a place of its own. The priority transports circle the fort on its ring (below),
+-- each jumping in onto it at a slot of its own, Mammoths and Lueneburgs in turn, 20,000 short of
+-- the slot's waypoint and facing the way round, and take their turns at the fort's bay from the
+-- ring. The others hold their places, on the side of the fort the wing came in from; the Rippers
+-- shuttle between theirs, below, and the bay. The fort's bay mouth stands 33,000 astern of its
+-- stern end.
 
 bay_mouth = waypoint("Bay mouth", {
     group = convoy_places,
     position = { 0, 10000, 2925000 },
 })
-mammoth_1_place = waypoint("Mammoth 1 place", { group = convoy_places, position = { -70000, -15000, 2890000 } })
-mammoth_2_place = waypoint("Mammoth 2 place", { group = convoy_places, position = { -105000, -15000, 2890000 } })
-mammoth_3_place = waypoint("Mammoth 3 place", { group = convoy_places, position = { -70000, 15000, 2870000 } })
-mammoth_4_place = waypoint("Mammoth 4 place", { group = convoy_places, position = { -105000, 15000, 2870000 } })
-mammoth_5_place = waypoint("Mammoth 5 place", { group = convoy_places, position = { -70000, 0, 2845000 } })
-mammoth_6_place = waypoint("Mammoth 6 place", { group = convoy_places, position = { -105000, 0, 2845000 } })
-lueneburg_1_place = waypoint("Lueneburg 1 place", { group = convoy_places, position = { 50000, -15000, 2895000 } })
-lueneburg_2_place = waypoint("Lueneburg 2 place", { group = convoy_places, position = { 80000, -15000, 2895000 } })
-lueneburg_3_place = waypoint("Lueneburg 3 place", { group = convoy_places, position = { 50000, 15000, 2880000 } })
-lueneburg_4_place = waypoint("Lueneburg 4 place", { group = convoy_places, position = { 80000, 15000, 2880000 } })
-lueneburg_5_place = waypoint("Lueneburg 5 place", { group = convoy_places, position = { 50000, 0, 2860000 } })
-lueneburg_6_place = waypoint("Lueneburg 6 place", { group = convoy_places, position = { 80000, 0, 2860000 } })
+mammoth_1_place = waypoint("Mammoth 1 place", { group = convoy_places, position = { -20000, -25000, 2900000 }, yaw = 90 })
+mammoth_2_place = waypoint("Mammoth 2 place", { group = convoy_places, position = { 76603, -25000, 2932679 }, yaw = 30 })
+mammoth_3_place = waypoint("Mammoth 3 place", { group = convoy_places, position = { 96603, -25000, 3032679 }, yaw = 330 })
+mammoth_4_place = waypoint("Mammoth 4 place", { group = convoy_places, position = { 20000, -25000, 3100000 }, yaw = 270 })
+mammoth_5_place = waypoint("Mammoth 5 place", { group = convoy_places, position = { -76603, -25000, 3067321 }, yaw = 210 })
+mammoth_6_place = waypoint("Mammoth 6 place", { group = convoy_places, position = { -96603, -25000, 2967321 }, yaw = 150 })
+lueneburg_1_place = waypoint("Lueneburg 1 place", { group = convoy_places, position = { 32679, -25000, 2903397 }, yaw = 60 })
+lueneburg_2_place = waypoint("Lueneburg 2 place", { group = convoy_places, position = { 100000, -25000, 2980000 }, yaw = 0 })
+lueneburg_3_place = waypoint("Lueneburg 3 place", { group = convoy_places, position = { 67321, -25000, 3076603 }, yaw = 300 })
+lueneburg_4_place = waypoint("Lueneburg 4 place", { group = convoy_places, position = { -32679, -25000, 3096603 }, yaw = 240 })
+lueneburg_5_place = waypoint("Lueneburg 5 place", { group = convoy_places, position = { -100000, -25000, 3020000 }, yaw = 180 })
+lueneburg_6_place = waypoint("Lueneburg 6 place", { group = convoy_places, position = { -67321, -25000, 2923397 }, yaw = 120 })
 lonestar_1_place = waypoint("Lonestar 1 place", { group = convoy_places, position = { -30000, 30000, 2830000 } })
 lonestar_2_place = waypoint("Lonestar 2 place", { group = convoy_places, position = { 30000, 30000, 2830000 } })
 ripper_1_place = waypoint("Ripper 1 place", { group = convoy_places, position = { -62500, -40000, 2860000 } })
@@ -458,18 +468,35 @@ kestrel_place = waypoint("Kestrel place", { group = convoy_places, position = { 
 prowler_1_place = waypoint("Prowler 1 place", { group = convoy_places, position = { -40000, 45000, 2830000 } })
 prowler_2_place = waypoint("Prowler 2 place", { group = convoy_places, position = { 40000, 45000, 2830000 } })
 
-mammoth_1 = ship("Mammoth A", { type = "mammoth", group = convoy_mammoths, pilot = "mammoth_1", position = { -70000, -15000, 2890000 } })
-mammoth_2 = ship("Mammoth B", { type = "mammoth", group = convoy_mammoths, pilot = "mammoth_2", position = { -105000, -15000, 2890000 } })
-mammoth_3 = ship("Mammoth C", { type = "mammoth", group = convoy_mammoths, pilot = "mammoth_3", position = { -70000, 15000, 2870000 } })
-mammoth_4 = ship("Mammoth D", { type = "mammoth", group = convoy_mammoths, pilot = "mammoth_1", position = { -105000, 15000, 2870000 } })
-mammoth_5 = ship("Mammoth E", { type = "mammoth", group = convoy_mammoths, pilot = "mammoth_2", position = { -70000, 0, 2845000 } })
-mammoth_6 = ship("Mammoth F", { type = "mammoth", group = convoy_mammoths, pilot = "mammoth_3", position = { -105000, 0, 2845000 } })
-lueneburg_1 = ship("Lueneburg A", { type = "lueneburg", group = convoy_lueneburgs, position = { 50000, -15000, 2895000 } })
-lueneburg_2 = ship("Lueneburg B", { type = "lueneburg", group = convoy_lueneburgs, position = { 80000, -15000, 2895000 } })
-lueneburg_3 = ship("Lueneburg C", { type = "lueneburg", group = convoy_lueneburgs, position = { 50000, 15000, 2880000 } })
-lueneburg_4 = ship("Lueneburg D", { type = "lueneburg", group = convoy_lueneburgs, position = { 80000, 15000, 2880000 } })
-lueneburg_5 = ship("Lueneburg E", { type = "lueneburg", group = convoy_lueneburgs, position = { 50000, 0, 2860000 } })
-lueneburg_6 = ship("Lueneburg F", { type = "lueneburg", group = convoy_lueneburgs, position = { 80000, 0, 2860000 } })
+-- The fort's ring: twelve waypoints 100,000 about the fort, 25,000 below it, which the priority
+-- transports fly round, from the side the wing came in from to the right and on round beyond the
+-- fort: as a transport comes within 4,000 of one, it flies for the next (the ring's triggers).
+-- Below the fort, the ring keeps clear of the Richelieu's torpedoes and of the original defenders.
+ring_1 = waypoint("Ring 1", { group = fort_ring, position = { 0, -25000, 2900000 } })
+ring_2 = waypoint("Ring 2", { group = fort_ring, position = { 50000, -25000, 2913397 } })
+ring_3 = waypoint("Ring 3", { group = fort_ring, position = { 86603, -25000, 2950000 } })
+ring_4 = waypoint("Ring 4", { group = fort_ring, position = { 100000, -25000, 3000000 } })
+ring_5 = waypoint("Ring 5", { group = fort_ring, position = { 86603, -25000, 3050000 } })
+ring_6 = waypoint("Ring 6", { group = fort_ring, position = { 50000, -25000, 3086603 } })
+ring_7 = waypoint("Ring 7", { group = fort_ring, position = { 0, -25000, 3100000 } })
+ring_8 = waypoint("Ring 8", { group = fort_ring, position = { -50000, -25000, 3086603 } })
+ring_9 = waypoint("Ring 9", { group = fort_ring, position = { -86603, -25000, 3050000 } })
+ring_10 = waypoint("Ring 10", { group = fort_ring, position = { -100000, -25000, 3000000 } })
+ring_11 = waypoint("Ring 11", { group = fort_ring, position = { -86603, -25000, 2950000 } })
+ring_12 = waypoint("Ring 12", { group = fort_ring, position = { -50000, -25000, 2913397 } })
+
+mammoth_1 = ship("Mammoth A", { type = "mammoth", group = convoy_mammoths, pilot = "mammoth_1", position = { -20000, -25000, 2900000 }, yaw = 90 })
+mammoth_2 = ship("Mammoth B", { type = "mammoth", group = convoy_mammoths, pilot = "mammoth_2", position = { 76603, -25000, 2932679 }, yaw = 30 })
+mammoth_3 = ship("Mammoth C", { type = "mammoth", group = convoy_mammoths, pilot = "mammoth_3", position = { 96603, -25000, 3032679 }, yaw = 330 })
+mammoth_4 = ship("Mammoth D", { type = "mammoth", group = convoy_mammoths, pilot = "mammoth_1", position = { 20000, -25000, 3100000 }, yaw = 270 })
+mammoth_5 = ship("Mammoth E", { type = "mammoth", group = convoy_mammoths, pilot = "mammoth_2", position = { -76603, -25000, 3067321 }, yaw = 210 })
+mammoth_6 = ship("Mammoth F", { type = "mammoth", group = convoy_mammoths, pilot = "mammoth_3", position = { -96603, -25000, 2967321 }, yaw = 150 })
+lueneburg_1 = ship("Lueneburg A", { type = "lueneburg", group = convoy_lueneburgs, position = { 32679, -25000, 2903397 }, yaw = 60 })
+lueneburg_2 = ship("Lueneburg B", { type = "lueneburg", group = convoy_lueneburgs, position = { 100000, -25000, 2980000 }, yaw = 0 })
+lueneburg_3 = ship("Lueneburg C", { type = "lueneburg", group = convoy_lueneburgs, position = { 67321, -25000, 3076603 }, yaw = 300 })
+lueneburg_4 = ship("Lueneburg D", { type = "lueneburg", group = convoy_lueneburgs, position = { -32679, -25000, 3096603 }, yaw = 240 })
+lueneburg_5 = ship("Lueneburg E", { type = "lueneburg", group = convoy_lueneburgs, position = { -100000, -25000, 3020000 }, yaw = 180 })
+lueneburg_6 = ship("Lueneburg F", { type = "lueneburg", group = convoy_lueneburgs, position = { -67321, -25000, 2923397 }, yaw = 120 })
 lonestar_1 = ship("Lonestar 1", { type = "lonestar", group = convoy_lonestars, position = { -30000, 30000, 2830000 } })
 lonestar_2 = ship("Lonestar 2", { type = "lonestar", group = convoy_lonestars, position = { 30000, 30000, 2830000 } })
 ripper_1 = ship("Ripper 1", { type = "ripper", group = convoy_rippers, position = { -62500, -40000, 2860000 } })
@@ -486,6 +513,8 @@ convoy_prowler_2 = ship("Prowler B", { type = "prowler", group = convoy_escorts,
 
 priority_transports = squad("(AI)Priority transports", { convoy_mammoths, convoy_lueneburgs })
 convoy = squad("(AI)Convoy", { convoy_mammoths, convoy_lueneburgs, convoy_lonestars, convoy_rippers, convoy_nannies, convoy_escorts, defenders })
+-- The convoy's ships that jump in with the Richelieu: all but the original defenders.
+convoy_arrivals = squad("(AI)Convoy arrivals", { convoy_mammoths, convoy_lueneburgs, convoy_lonestars, convoy_rippers, convoy_nannies, convoy_escorts })
 
 -- The Sabre waves of the evacuation window, three a minute, each jumping in at a point of its own
 -- about the fort: from above and below, from either side, from behind the convoy and from beyond
@@ -585,7 +614,7 @@ camera_far = point("Camera far", { group = zone_points, position = { 100000, -45
 camera_kestrel = point("Camera Kestrel", { group = zone_points, position = { -22000, -52000, 2898000 } })
 camera_murmansk = point("Camera Murmansk", { group = zone_points, position = { -60000, -25000, 3040000 } })
 camera_kazan = point("Camera Kazan", { group = zone_points, position = { 90000, -20000, 3030000 } })
-camera_richelieu = point("Camera Richelieu", { group = zone_points, position = { -40000, -30000, 3020000 } })
+camera_richelieu = point("Camera Richelieu", { group = zone_points, position = { -10000, -30000, 3110000 } })
 camera_torpedo = point("Camera torpedo", { group = zone_points, position = { 35000, -20000, 3060000 } })
 camera_strike = point("Camera strike", { group = zone_points, position = { 20000, -170000, 3060000 } })
 camera_sevastopol = point("Camera Sevastopol", { group = zone_points, position = { -110000, -50000, 3180000 } })
@@ -908,7 +937,7 @@ window_opens = part("(F)Window opens", function()
 end)
 
 -- The Kazan's systems. Each step unlocks the next; the triggers watch the components by their
--- index. The Kazan explodes as the Richelieu's torpedo hits it.
+-- index. The Kazan explodes once the Richelieu's torpedoes for it are done with.
 
 on(kazan, "destroyed", { component = 4 }, function(killer, victim)
     systems_step = 2
@@ -931,12 +960,6 @@ end)
 on(kazan, "destroyed", { component = 3 }, function(killer, victim)
     kazan_engines += 1
     kazan_engine_down()
-    return 1
-end)
-
-on(kazan, "shot_at", { repeats = "always", attacker = torpedo_kazan }, function(attacker, shield_damage, hull_damage, victim, weapon_fired)
-    explode_kazan()
-    spawn(carriers_together)
     return 1
 end)
 
@@ -1004,12 +1027,6 @@ on(murmansk, "destroyed", { component = 2 }, function(killer, victim)
     return 1
 end)
 
-on(murmansk, "shot_at", { repeats = "always", attacker = torpedo_murmansk }, function(attacker, shield_damage, hull_damage, victim, weapon_fired)
-    explode_murmansk()
-    spawn(carriers_together)
-    return 1
-end)
-
 on(murmansk, "destroyed", function(killer, victim)
     carriers_down += 1
     if carriers_down == 2 then
@@ -1058,26 +1075,33 @@ explode_murmansk = part("(F)Explode Murmansk", function()
     return 1
 end)
 
--- The first torpedo to hit sets off both carriers at once, whether the other torpedo has hit yet
--- or not, as mission 18 sets off the Kiev on the Yamato's hit. The torpedo left flying is taken
--- away, so that it hits nothing else.
+-- Each carrier explodes on its own once its four torpedoes are done with, each having hit it or
+-- been shot down. A torpedo's strike on a hull counts as a crash, which posts no ShotAt where the
+-- part struck is already destroyed, such as an engine the wing shot out: so the torpedoes'
+-- destruction tells their end, not the carrier's ShotAt.
 
-carriers_together = part("(F)Carriers together", function()
-    if strike_on == 1 then
-        strike_on = 2
+on(kazan_torpedoes, "destroyed", { repeats = "always" }, function(killer, victim)
+    kazan_torpedoes_done += 1
+    if kazan_torpedoes_done == 4 then
         explode_kazan()
+    end
+    return 1
+end)
+
+on(murmansk_torpedoes, "destroyed", { repeats = "always" }, function(killer, victim)
+    murmansk_torpedoes_done += 1
+    if murmansk_torpedoes_done == 4 then
         explode_murmansk()
-        Wait(3)
-        DestroyFlightGroup(strike_torpedoes)
     end
     return 1
 end)
 
 -- The Richelieu's counterattack: the bridge says it's coming, Corsair calls the wing clear, and
--- the Richelieu jumps in between the carriers, the convoy with it, each ship at its place. It
--- launches a torpedo at each carrier from its bow gates, which a shot follows away, and a shot
--- from high above shows both carriers go; both go at once should the torpedoes miss, 40 seconds
--- on.
+-- the Richelieu jumps in between the carriers, the convoy with it, each ship at its place, and
+-- holds there. It fires four torpedoes from each side at the carrier on that side, one from each
+-- side a second, which a shot follows away, and a shot from high above shows the carriers go;
+-- those still whole go 40 seconds on, should the torpedoes miss. The convoy then settles: the
+-- priority transports onto the fort's ring, the others at their places.
 
 counterattack = part("(F)Counterattack", function()
     SetObjective(3, 1)
@@ -1101,27 +1125,83 @@ counterattack = part("(F)Counterattack", function()
     CreateFlightGroup(convoy_rippers)
     CreateFlightGroup(convoy_nannies)
     CreateFlightGroup(convoy_escorts)
-    SetAI(convoy, "fly", 1, nil)
+    CreateFlightGroup(fort_ring)
+    SetAI(convoy_arrivals, "fly", 1, nil)
     SetAI(richelieu, "jump_in", 1, richelieu_in)
     convoy_jumps_in()
+    spawn(convoy_arrives)
     StartDirectorCam(camera_richelieu, richelieu, 9, nil, alpha)
     WaitForJumpOrLaunch(carrier_group)
     SetAI(richelieu, "immediately_set_ship_to_zero_velocity_and_rotation", 1, nil)
-    CreateFlightGroup(strike_torpedoes)
-    SetAI(strike_torpedoes, "explode", 1, nil)
-    SetAI(torpedo_kazan, "find_new_target", 1, kazan)
-    SetAI(torpedo_murmansk, "find_new_target", 1, murmansk)
-    SetupLaunch(torpedo_murmansk, richelieu, 2)
-    SetupLaunch(torpedo_kazan, richelieu, 3)
+    richelieu_holds()
+    CreateFlightGroup(kazan_torpedoes)
+    CreateFlightGroup(murmansk_torpedoes)
     Wait(1)
-    strike_on = 1
-    StartLaunch(torpedo_murmansk)
-    StartLaunch(torpedo_kazan)
-    StartDirectorCam(camera_torpedo, torpedo_kazan, 9, nil, alpha)
+    fire_pair(torpedo_kazan_1, torpedo_murmansk_1)
+    StartDirectorCam(camera_torpedo, torpedo_kazan_1, 9, nil, alpha)
     StackDirectorCam(camera_strike, richelieu, 20, nil, alpha)
     spawn(strike_fallback)
-    WaitForJumpOrLaunch(convoy)
-    SetAI(convoy, "immediately_set_ship_to_zero_velocity_and_rotation", 1, nil)
+    Wait(1)
+    fire_pair(torpedo_kazan_2, torpedo_murmansk_2)
+    Wait(1)
+    fire_pair(torpedo_kazan_3, torpedo_murmansk_3)
+    Wait(1)
+    fire_pair(torpedo_kazan_4, torpedo_murmansk_4)
+    return 1
+end)
+
+-- The convoy out of its jump: it stops, and settles at once, before a transport can fly on past
+-- its slot's waypoint.
+
+convoy_arrives = part("(F)Convoy arrives", function()
+    WaitForJumpOrLaunch(convoy_arrivals)
+    SetAI(convoy_arrivals, "immediately_set_ship_to_zero_velocity_and_rotation", 1, nil)
+    convoy_settles()
+    return 1
+end)
+
+-- The Richelieu stops where it is and holds, its launch's Fly at 10 done with, so that it never
+-- drifts on into the fort.
+
+richelieu_holds = part("(F)Richelieu holds", function()
+    ClearAI(richelieu)
+    SetAI(richelieu, "do_nothing", 1, nil)
+    return 1
+end)
+
+-- One torpedo from each side of the Richelieu, each for the carrier on its side. A torpedo whose
+-- target is gone, or which can aim at it no more, explodes.
+
+fire_pair = part("(F)Fire pair", function(at_kazan, at_murmansk)
+    SetAI(at_kazan, "explode", 1, nil)
+    SetAI(at_kazan, "find_new_target", 1, kazan)
+    SetAI(at_murmansk, "explode", 1, nil)
+    SetAI(at_murmansk, "find_new_target", 1, murmansk)
+    return 1
+end)
+
+-- The convoy in place: the jump's Fly is done with, so that no ship flies on for ever. Each
+-- priority transport flies onto the fort's ring at its slot, and the ring's triggers take it
+-- round from there; the Rippers wait between their runs; the other ships hold their places.
+
+convoy_settles = part("(F)Convoy settles", function()
+    ClearAI(convoy_arrivals)
+    SetAI(convoy_rippers, "do_nothing", 1, nil)
+    SetAI(convoy_lonestars, "do_nothing", 1, nil)
+    SetAI(convoy_nannies, "do_nothing", 1, nil)
+    SetAI(convoy_escorts, "do_nothing", 1, nil)
+    Fly(mammoth_1, ring_1, 80)
+    Fly(lueneburg_1, ring_2, 80)
+    Fly(mammoth_2, ring_3, 80)
+    Fly(lueneburg_2, ring_4, 80)
+    Fly(mammoth_3, ring_5, 80)
+    Fly(lueneburg_3, ring_6, 80)
+    Fly(mammoth_4, ring_7, 80)
+    Fly(lueneburg_4, ring_8, 80)
+    Fly(mammoth_5, ring_9, 80)
+    Fly(lueneburg_5, ring_10, 80)
+    Fly(mammoth_6, ring_11, 80)
+    Fly(lueneburg_6, ring_12, 80)
     return 1
 end)
 
@@ -1156,7 +1236,90 @@ end)
 
 strike_fallback = part("(F)Strike fallback", function()
     Wait(40)
-    carriers_together()
+    explode_kazan()
+    explode_murmansk()
+    return 1
+end)
+
+-- The fort's ring: a priority transport within 4,000 of a waypoint flies for the next, at 80,
+-- below the Lueneburgs' top speed, so that the Mammoths keep their slots too. Each trigger answers
+-- any ship, once a second while it is that close; the part passes over all but the priority
+-- transports. One that passes a waypoint on its way to the bay is sent back to it a second later
+-- (`evacuation_tick`).
+
+ring_on = part("(F)Ring on", function(ship, next_point)
+    if in_flight_group(ship, convoy_mammoths) or in_flight_group(ship, convoy_lueneburgs) then
+        ClearAI(ship)
+        Fly(ship, next_point, 80)
+    end
+    return 1
+end)
+
+on(ring_1, "ship_reached", { repeats = "always" }, function(reached_ship)
+    ring_on(reached_ship, ring_2)
+    return 1
+end)
+on(ring_2, "ship_reached", { repeats = "always" }, function(reached_ship)
+    ring_on(reached_ship, ring_3)
+    return 1
+end)
+on(ring_3, "ship_reached", { repeats = "always" }, function(reached_ship)
+    ring_on(reached_ship, ring_4)
+    return 1
+end)
+on(ring_4, "ship_reached", { repeats = "always" }, function(reached_ship)
+    ring_on(reached_ship, ring_5)
+    return 1
+end)
+on(ring_5, "ship_reached", { repeats = "always" }, function(reached_ship)
+    ring_on(reached_ship, ring_6)
+    return 1
+end)
+on(ring_6, "ship_reached", { repeats = "always" }, function(reached_ship)
+    ring_on(reached_ship, ring_7)
+    return 1
+end)
+on(ring_7, "ship_reached", { repeats = "always" }, function(reached_ship)
+    ring_on(reached_ship, ring_8)
+    return 1
+end)
+on(ring_8, "ship_reached", { repeats = "always" }, function(reached_ship)
+    ring_on(reached_ship, ring_9)
+    return 1
+end)
+on(ring_9, "ship_reached", { repeats = "always" }, function(reached_ship)
+    ring_on(reached_ship, ring_10)
+    return 1
+end)
+on(ring_10, "ship_reached", { repeats = "always" }, function(reached_ship)
+    ring_on(reached_ship, ring_11)
+    return 1
+end)
+on(ring_11, "ship_reached", { repeats = "always" }, function(reached_ship)
+    ring_on(reached_ship, ring_12)
+    return 1
+end)
+on(ring_12, "ship_reached", { repeats = "always" }, function(reached_ship)
+    ring_on(reached_ship, ring_1)
+    return 1
+end)
+
+-- The ring's triggers off, for the departure, so that none takes a transport off its jump.
+
+ring_off = part("(F)Ring off", function()
+    SetTriggerState(ring_1, "ship_reached", 0)
+    SetTriggerState(ring_2, "ship_reached", 0)
+    SetTriggerState(ring_3, "ship_reached", 0)
+    SetTriggerState(ring_4, "ship_reached", 0)
+    SetTriggerState(ring_5, "ship_reached", 0)
+    SetTriggerState(ring_6, "ship_reached", 0)
+    SetTriggerState(ring_7, "ship_reached", 0)
+    SetTriggerState(ring_8, "ship_reached", 0)
+    SetTriggerState(ring_9, "ship_reached", 0)
+    SetTriggerState(ring_10, "ship_reached", 0)
+    SetTriggerState(ring_11, "ship_reached", 0)
+    SetTriggerState(ring_12, "ship_reached", 0)
+    SetTriggerState(bay_mouth, "ship_reached", 0)
     return 1
 end)
 
@@ -1222,6 +1385,9 @@ evacuation_tick = part("(F)Evacuation tick", function()
         if turn_clock == 1 then
             turn_starts()
         end
+        if turn_clock > 1 and turn_clock < 30 and bay_held == 0 then
+            to_bay()
+        end
         if turn_clock == 36 then
             turn_ends()
         end
@@ -1237,103 +1403,167 @@ evacuation_tick = part("(F)Evacuation tick", function()
     return 1
 end)
 
--- A transport's turn: it flies to the bay mouth, which takes it at most 30 seconds, holds there a
--- few moments, and flies back to its place at 36 seconds, as the next one sets off. A transport
--- that has been lost is passed over, the next one trying a second later.
+-- A transport's turn: it leaves the ring for the bay mouth, which takes it at most 30 seconds, and
+-- holds there once it reaches it, until it flies back onto the ring at 36 seconds, at its first
+-- waypoint, as the next one sets off. Until it holds, it is sent for the bay again each second, so
+-- that a ring's waypoint it passes on the way doesn't keep it. A transport that has been lost is
+-- passed over, the next one trying a second later.
 
 turn_starts = part("(F)Turn starts", function()
     at_bay = 0
+    bay_held = 0
     if evac_turn == 1 and mammoth_1_on == 1 then
         at_bay = 1
-        Fly(mammoth_1, bay_mouth, 160)
     end
     if evac_turn == 2 and lueneburg_1_on == 1 then
         at_bay = 2
-        Fly(lueneburg_1, bay_mouth, 160)
     end
     if evac_turn == 3 and mammoth_2_on == 1 then
         at_bay = 3
-        Fly(mammoth_2, bay_mouth, 160)
     end
     if evac_turn == 4 and lueneburg_2_on == 1 then
         at_bay = 4
-        Fly(lueneburg_2, bay_mouth, 160)
     end
     if evac_turn == 5 and mammoth_3_on == 1 then
         at_bay = 5
-        Fly(mammoth_3, bay_mouth, 160)
     end
     if evac_turn == 6 and lueneburg_3_on == 1 then
         at_bay = 6
-        Fly(lueneburg_3, bay_mouth, 160)
     end
     if evac_turn == 7 and mammoth_4_on == 1 then
         at_bay = 7
-        Fly(mammoth_4, bay_mouth, 160)
     end
     if evac_turn == 8 and lueneburg_4_on == 1 then
         at_bay = 8
-        Fly(lueneburg_4, bay_mouth, 160)
     end
     if evac_turn == 9 and mammoth_5_on == 1 then
         at_bay = 9
-        Fly(mammoth_5, bay_mouth, 160)
     end
     if evac_turn == 10 and lueneburg_5_on == 1 then
         at_bay = 10
-        Fly(lueneburg_5, bay_mouth, 160)
     end
     if evac_turn == 11 and mammoth_6_on == 1 then
         at_bay = 11
-        Fly(mammoth_6, bay_mouth, 160)
     end
     if evac_turn == 12 and lueneburg_6_on == 1 then
         at_bay = 12
-        Fly(lueneburg_6, bay_mouth, 160)
     end
     if at_bay == 0 then
         next_turn()
+    else
+        to_bay()
     end
+    return 1
+end)
+
+to_bay = part("(F)To the bay", function()
+    if at_bay == 1 and mammoth_1_on == 1 then
+        Fly(mammoth_1, bay_mouth, 160)
+    end
+    if at_bay == 2 and lueneburg_1_on == 1 then
+        Fly(lueneburg_1, bay_mouth, 160)
+    end
+    if at_bay == 3 and mammoth_2_on == 1 then
+        Fly(mammoth_2, bay_mouth, 160)
+    end
+    if at_bay == 4 and lueneburg_2_on == 1 then
+        Fly(lueneburg_2, bay_mouth, 160)
+    end
+    if at_bay == 5 and mammoth_3_on == 1 then
+        Fly(mammoth_3, bay_mouth, 160)
+    end
+    if at_bay == 6 and lueneburg_3_on == 1 then
+        Fly(lueneburg_3, bay_mouth, 160)
+    end
+    if at_bay == 7 and mammoth_4_on == 1 then
+        Fly(mammoth_4, bay_mouth, 160)
+    end
+    if at_bay == 8 and lueneburg_4_on == 1 then
+        Fly(lueneburg_4, bay_mouth, 160)
+    end
+    if at_bay == 9 and mammoth_5_on == 1 then
+        Fly(mammoth_5, bay_mouth, 160)
+    end
+    if at_bay == 10 and lueneburg_5_on == 1 then
+        Fly(lueneburg_5, bay_mouth, 160)
+    end
+    if at_bay == 11 and mammoth_6_on == 1 then
+        Fly(mammoth_6, bay_mouth, 160)
+    end
+    if at_bay == 12 and lueneburg_6_on == 1 then
+        Fly(lueneburg_6, bay_mouth, 160)
+    end
+    return 1
+end)
+
+-- The transport whose turn it is reaches the bay mouth, and holds there.
+
+bay_reached = part("(F)Bay reached", function(ship)
+    if bay_held == 0 and at_bay > 0 then
+        if in_flight_group(ship, convoy_mammoths) or in_flight_group(ship, convoy_lueneburgs) then
+            bay_held = 1
+            ClearAI(ship)
+            SetAI(ship, "do_nothing", 1, nil)
+        end
+    end
+    return 1
+end)
+
+on(bay_mouth, "ship_reached", { repeats = "always" }, function(reached_ship)
+    bay_reached(reached_ship)
     return 1
 end)
 
 turn_ends = part("(F)Turn ends", function()
     if at_bay == 1 and mammoth_1_on == 1 then
-        Fly(mammoth_1, mammoth_1_place, 160)
+        ClearAI(mammoth_1)
+        Fly(mammoth_1, ring_1, 80)
     end
     if at_bay == 2 and lueneburg_1_on == 1 then
-        Fly(lueneburg_1, lueneburg_1_place, 160)
+        ClearAI(lueneburg_1)
+        Fly(lueneburg_1, ring_1, 80)
     end
     if at_bay == 3 and mammoth_2_on == 1 then
-        Fly(mammoth_2, mammoth_2_place, 160)
+        ClearAI(mammoth_2)
+        Fly(mammoth_2, ring_1, 80)
     end
     if at_bay == 4 and lueneburg_2_on == 1 then
-        Fly(lueneburg_2, lueneburg_2_place, 160)
+        ClearAI(lueneburg_2)
+        Fly(lueneburg_2, ring_1, 80)
     end
     if at_bay == 5 and mammoth_3_on == 1 then
-        Fly(mammoth_3, mammoth_3_place, 160)
+        ClearAI(mammoth_3)
+        Fly(mammoth_3, ring_1, 80)
     end
     if at_bay == 6 and lueneburg_3_on == 1 then
-        Fly(lueneburg_3, lueneburg_3_place, 160)
+        ClearAI(lueneburg_3)
+        Fly(lueneburg_3, ring_1, 80)
     end
     if at_bay == 7 and mammoth_4_on == 1 then
-        Fly(mammoth_4, mammoth_4_place, 160)
+        ClearAI(mammoth_4)
+        Fly(mammoth_4, ring_1, 80)
     end
     if at_bay == 8 and lueneburg_4_on == 1 then
-        Fly(lueneburg_4, lueneburg_4_place, 160)
+        ClearAI(lueneburg_4)
+        Fly(lueneburg_4, ring_1, 80)
     end
     if at_bay == 9 and mammoth_5_on == 1 then
-        Fly(mammoth_5, mammoth_5_place, 160)
+        ClearAI(mammoth_5)
+        Fly(mammoth_5, ring_1, 80)
     end
     if at_bay == 10 and lueneburg_5_on == 1 then
-        Fly(lueneburg_5, lueneburg_5_place, 160)
+        ClearAI(lueneburg_5)
+        Fly(lueneburg_5, ring_1, 80)
     end
     if at_bay == 11 and mammoth_6_on == 1 then
-        Fly(mammoth_6, mammoth_6_place, 160)
+        ClearAI(mammoth_6)
+        Fly(mammoth_6, ring_1, 80)
     end
     if at_bay == 12 and lueneburg_6_on == 1 then
-        Fly(lueneburg_6, lueneburg_6_place, 160)
+        ClearAI(lueneburg_6)
+        Fly(lueneburg_6, ring_1, 80)
     end
+    bay_held = 0
     next_turn()
     return 1
 end)
@@ -1500,6 +1730,7 @@ window_ends = part("(F)Window ends", function()
     PrintShipName(san_marco, 100 + transports_saved)
     SetObjective(4, 1)
     SetObjective(5, 2)
+    ring_off()
     spawn(departure_order)
     spawn(departure)
     return 1
@@ -2223,13 +2454,16 @@ test_fort = part("(F)Test fort", function()
     game.jump_ready = 0
     SetObjective(0, 1)
     SnapToPoint(richelieu, richelieu_in)
+    richelieu_holds()
     CreateFlightGroup(convoy_places)
+    CreateFlightGroup(fort_ring)
     CreateFlightGroup(convoy_mammoths)
     CreateFlightGroup(convoy_lueneburgs)
     CreateFlightGroup(convoy_lonestars)
     CreateFlightGroup(convoy_rippers)
     CreateFlightGroup(convoy_nannies)
     CreateFlightGroup(convoy_escorts)
+    convoy_settles()
     return 1
 end)
 
